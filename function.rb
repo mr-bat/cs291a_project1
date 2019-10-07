@@ -8,19 +8,26 @@ def main(event:, context:)
   # You shouldn't need to use context, but its fields are explained here:
   # https://docs.aws.amazon.com/lambda/latest/dg/ruby-context.html
   if event['path'] == '/token' && event['httpMethod'].upcase == 'POST'
-    generate_token(body: event)
+    generate_token(request: event)
   elsif event['path'] == '/' && event['httpMethod'].upcase == 'GET'
-    get_token_data(body: event)
+    get_token_data(request: event)
   end
   # response(body: event, status: 200)
 end
 
-def generate_token(body: event)
-  return response(status: 422) unless body.is_a?(Hash)
-  return response(status: 415) unless body['headers']['Content-Type'] == 'application/json'
+def generate_token(request: event)
+  # body = {}
+  # begin
+  #   body = JSON.parse(request['body'])
+  # rescue
+  #   response(status: 422)
+  # end
+  # PP.pp request
+  return response(status: 422) unless body['body'].class == Hash
+  return response(status: 415) unless request['headers']['Content-Type'] == 'application/json'
 
   payload = {
-      data: body,
+      data: request,
       exp: Time.now.to_i + 1,
       nbf: Time.now.to_i
   }
@@ -31,8 +38,8 @@ def generate_token(body: event)
   }, status: 201)
 end
 
-def get_token_data(body: event)
-  2
+def get_token_data(request: event)
+  response(status: 200)
 end
 
 def response(body: nil, status: 200)
@@ -50,7 +57,8 @@ if $PROGRAM_NAME == __FILE__
 
   # Call /token
   PP.pp main(context: {}, event: {
-               'body' => '{"name": "bboe"}',
+               'body' => '{',
+               # 'body' => '{"name": "bboe"}',
                'headers' => { 'Content-Type' => 'application/json' },
                'httpMethod' => 'POST',
                'path' => '/token'
