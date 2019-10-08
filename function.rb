@@ -70,10 +70,12 @@ def get_token_data(request: event)
     decoded_token = JWT.decode token, ENV['JWT_SECRET'], true, algorithm: 'HS256'
     return response(status: 401) unless decoded_token[0].key?('data')
 
-    response(body: decoded_token[0]['data'], status: 200)
-  rescue
+    return response(body: decoded_token[0]['data'], status: 200)
+  rescue JWT::ExpiredSignature, JWT::ImmatureSignature
     # Handle invalid token, e.g. logout user or deny access
-    response(status: 401)
+    return response(status: 401)
+  rescue JWT::InvalidIssuerError
+    return response(status: 403)
   end
 end
 
