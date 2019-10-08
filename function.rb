@@ -71,7 +71,7 @@ def get_token_data(request: event)
     return response(status: 401) unless decoded_token[0].key?('data')
 
     response(body: decoded_token[0]['data'], status: 200)
-  rescue JWT::ImmatureSignature
+  rescue
     # Handle invalid token, e.g. logout user or deny access
     response(status: 401)
   end
