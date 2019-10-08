@@ -74,7 +74,7 @@ def get_token_data(request: event)
   rescue JWT::ExpiredSignature, JWT::ImmatureSignature
     # Handle invalid token, e.g. logout user or deny access
     return response(status: 401)
-  rescue JWT::InvalidIssuerError
+  rescue
     return response(status: 403)
   end
 end
