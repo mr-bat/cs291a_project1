@@ -61,7 +61,8 @@ def generate_token(request: event)
 end
 
 def get_token_data(request: event)
-  unless lowercaseKeys(request['headers'])['authorization'].start_with?('Bearer ')
+  authorizationHeader = lowercaseKeys(request['headers'])['authorization']
+  unless authorizationHeader.class == String && authorizationHeader.start_with?('Bearer ')
     return response(status: 403)
   end
 
@@ -109,7 +110,8 @@ if $PROGRAM_NAME == __FILE__
   token = JWT.encode payload, ENV['JWT_SECRET'], 'HS256'
   # Call /
   PP.pp main(context: {}, event: {
-               'headers' => { 'Authorization' => "Bearer #{token}",
+               'headers' => {
+                   'Authorization' => "Bearer #{token}3",
                               'Content-Type' => 'application/json' },
                'httpMethod' => 'GET',
                'path' => '/'
