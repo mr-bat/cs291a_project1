@@ -20,7 +20,7 @@ def main(event:, context:)
 
   # return print request
   if request['path'] == '/token'
-    if request['httpmethod'] == "POST"
+    if request['httpmethod'] == 'POST'
       generate_token(request: request)
     else
       response(status: 405)
@@ -61,7 +61,20 @@ def generate_token(request: event)
 end
 
 def get_token_data(request: event)
-  response(status: 200)
+  unless lowercaseKeys(request['headers'])['authorization'].start_with?('Bearer ')
+    return response(status: 403)
+  end
+
+  begin
+    token = lowercaseKeys(request['headers'])['authorization'][7..-1]
+    decoded_token = JWT.decode token, ENV['JWT_SECRET'], true, algorithm: 'HS256'
+    return response(status: 401) unless decoded_token[0].key?('data')
+
+    response(body: decoded_token[0]['data'], status: 200)
+  rescue JWT::ImmatureSignature
+    # Handle invalid token, e.g. logout user or deny access
+    response(status: 401)
+  end
 end
 
 def response(body: nil, status: 200)
