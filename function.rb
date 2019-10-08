@@ -4,23 +4,35 @@ require 'json'
 require 'jwt'
 require 'pp'
 
+def lowercaseKeys(hash)
+  result = {}
+  hash.to_hash.each_pair do |k, v|
+    result.merge!(k.downcase => v)
+  end
+
+  result
+end
+
 def main(event:, context:)
   # You shouldn't need to use context, but its fields are explained here:
   # https://docs.aws.amazon.com/lambda/latest/dg/ruby-context.html
-  if event['path'] == '/token'
-    if event['httpMethod'].upcase == 'POST'
-      generate_token(request: event)
+  request = lowercaseKeys event
+
+  # return print request
+  if request['path'] == '/token'
+    if request['httpmethod'] == "POST"
+      generate_token(request: request)
     else
       response(status: 405)
     end
-  elsif event['path'] == '/'
-    if event['httpMethod'].upcase == 'GET'
-      get_token_data(request: event)
+  elsif request['path'] == '/'
+    if request['httpmethod'] == 'GET'
+      get_token_data(request: request)
     else
       response(status: 405)
     end
   else
-    response(body: event, status: 404)
+    response(body: request, status: 404)
   end
 end
 
@@ -28,17 +40,18 @@ def generate_token(request: event)
   body = {}
   begin
     body = JSON.parse(request['body'])
-  rescue
+  rescue StandardError
     return response(status: 422)
   end
-  PP.pp request
   # return response(status: 422) unless request['body'].class == Hash
-  return response(status: 415) unless request['headers']['Content-Type'] == 'application/json'
+  unless lowercaseKeys(request['headers'])['content-type'] == 'application/json'
+    return response(status: 415)
+  end
 
   payload = {
-      data: body,
-      exp: Time.now.to_i + 1,
-      nbf: Time.now.to_i
+    data: body,
+    exp: Time.now.to_i + 1,
+    nbf: Time.now.to_i
   }
   token = JWT.encode payload, ENV['JWT_SECRET'], 'HS256'
   response(body:
