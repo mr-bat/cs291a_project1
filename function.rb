@@ -50,8 +50,8 @@ def generate_token(request: event)
 
   payload = {
     data: body,
-    exp: Time.now.to_i + 1,
-    nbf: Time.now.to_i
+    exp: Time.now.to_i + 5,
+    nbf: Time.now.to_i + 2
   }
   token = JWT.encode payload, ENV['JWT_SECRET'], 'HS256'
   response(body:
@@ -68,14 +68,14 @@ def get_token_data(request: event)
 
   begin
     token = lowercaseKeys(request['headers'])['authorization'][7..-1]
-    decoded_token = JWT.decode token, ENV['JWT_SECRET'], true, algorithm: 'HS256'
+    decoded_token = JWT.decode token, ENV['JWT_SECRET'], true, exp_leeway: 0.05, algorithm: 'HS256'
     return response(status: 401) unless decoded_token[0].key?('data')
 
     return response(body: decoded_token[0]['data'], status: 200)
   rescue JWT::ExpiredSignature, JWT::ImmatureSignature
     # Handle invalid token, e.g. logout user or deny access
     return response(status: 401)
-  rescue
+  rescue StandardError
     return response(status: 403)
   end
 end
@@ -104,15 +104,17 @@ if $PROGRAM_NAME == __FILE__
   # Generate a token
   payload = {
     data: { user_id: 128 },
-    exp: Time.now.to_i + 1,
-    nbf: Time.now.to_i
+    exp: Time.now.to_i + 5,
+    nbf: Time.now.to_i + 2
   }
   token = JWT.encode payload, ENV['JWT_SECRET'], 'HS256'
   # Call /
+  sleep(2)
   PP.pp main(context: {}, event: {
                'headers' => {
-                   'Authorization' => "Bearer #{token}3",
-                              'Content-Type' => 'application/json' },
+                 'Authorization' => "Bearer #{token}",
+                 'Content-Type' => 'application/json'
+               },
                'httpMethod' => 'GET',
                'path' => '/'
              })
