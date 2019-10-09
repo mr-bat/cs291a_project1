@@ -68,7 +68,7 @@ def get_token_data(request: event)
 
   begin
     token = lowercaseKeys(request['headers'])['authorization'][7..-1]
-    decoded_token = JWT.decode token, ENV['JWT_SECRET'], true, exp_leeway: 0.05, algorithm: 'HS256'
+    decoded_token = JWT.decode token, ENV['JWT_SECRET'], true, algorithm: 'HS256'
     return response(status: 401) unless decoded_token[0].key?('data')
 
     return response(body: decoded_token[0]['data'], status: 200)
